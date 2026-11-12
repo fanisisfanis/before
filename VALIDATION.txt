@@ -1,0 +1,24 @@
+BEFORE 0.1.0 — initial delivery, 2026-11-12
+
+Executed: Linux x86-64, Python 3.12.14, PySide6 6.8.3, Qt offscreen.
+
+PASS 75 pytest checks (rules, privacy, malformed imports, storage, actual
+     loopback connections, proxy CONNECT routing, CLI export, native Qt workflow).
+PASS 14/14 synthetic evidence scenarios; see benchmarks/results.json.
+PASS Ruff lint and formatting checks.
+PASS Native Linux PyInstaller build with stripped shared libraries.
+PASS Portable GUI startup with the labelled demo.
+PASS Portable capture -> compare -> HTML report.
+PASS Portable isolated probe worker with a localhost-only request.
+PASS Portable end-to-end diagnosis of an actual subprocess PATH removal and
+     refused loopback proxy. Only child-process environment variables changed.
+PASS Visual inspection of desktop renders at 1190x810 and 960x680.
+
+Linux bundle ELF dependencies require GLIBC_2.39 or later; built on glibc 2.41.
+The desktop was rendered and exercised offscreen. The user's actual Arch
+installation and physical Windows hardware were not available for execution.
+The source includes Windows collectors and a Windows/Linux build workflow.
+No remote GitHub workflow run or completed Windows EXE is claimed.
+
+These results verify the listed cases. They do not measure general diagnostic
+accuracy, market demand, profitability, or superiority to existing products.

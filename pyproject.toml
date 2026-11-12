@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "before-desktop"
+version = "0.1.0"
+description = "See what changed since your computer last worked."
+readme = "README.md"
+requires-python = ">=3.10,<3.14"
+license = {text = "MIT"}
+dependencies = ["PySide6-Essentials==6.8.3"]
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.5", "ruff==0.9.10", "pyinstaller==6.11.1"]
+
+[project.gui-scripts]
+before = "before.app:main"
+
+[project.scripts]
+before-cli = "before.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+before = ["assets/*"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+ignore = ["E501"]

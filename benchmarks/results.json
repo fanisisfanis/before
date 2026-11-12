@@ -1,0 +1,100 @@
+{
+  "kind": "synthetic-evidence-scenarios",
+  "total": 14,
+  "passed": 14,
+  "results": [
+    {
+      "scenario": "unchanged",
+      "passed": true,
+      "findings": []
+    },
+    {
+      "scenario": "closed-local-proxy",
+      "passed": true,
+      "findings": [
+        "command_missing",
+        "local_proxy_unreachable",
+        "proxy_changed"
+      ]
+    },
+    {
+      "scenario": "lost-command",
+      "passed": true,
+      "findings": [
+        "command_missing",
+        "proxy_changed"
+      ]
+    },
+    {
+      "scenario": "proxy-change-is-only-hypothesis",
+      "passed": true,
+      "findings": [
+        "command_missing",
+        "proxy_changed"
+      ]
+    },
+    {
+      "scenario": "service-stopped-normally",
+      "passed": true,
+      "findings": []
+    },
+    {
+      "scenario": "service-disabled",
+      "passed": true,
+      "findings": [
+        "service_disabled"
+      ]
+    },
+    {
+      "scenario": "different-machine",
+      "passed": true,
+      "findings": []
+    },
+    {
+      "scenario": "commands-unreadable",
+      "passed": true,
+      "findings": [
+        "proxy_changed"
+      ]
+    },
+    {
+      "scenario": "no-baseline",
+      "passed": true,
+      "findings": []
+    },
+    {
+      "scenario": "missing-path-folder",
+      "passed": true,
+      "findings": [
+        "missing_path_directories"
+      ]
+    },
+    {
+      "scenario": "proxy-route-fails-only",
+      "passed": true,
+      "findings": [
+        "proxy_route_failed"
+      ]
+    },
+    {
+      "scenario": "dns-failure",
+      "passed": true,
+      "findings": [
+        "direct_route_failed",
+        "dns_failed"
+      ]
+    },
+    {
+      "scenario": "site-responds",
+      "passed": true,
+      "findings": [
+        "direct_route_ok"
+      ]
+    },
+    {
+      "scenario": "probe-timeout",
+      "passed": true,
+      "findings": []
+    }
+  ]
+}
