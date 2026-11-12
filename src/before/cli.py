@@ -9,6 +9,7 @@ from pathlib import Path
 
 from .collect import capture
 from .engine import analyze
+from .i18n import set_language, tr
 from .models import Snapshot
 from .probes import local_proxy_checks, network_checks, validate_host
 from .report import html_report, markdown
@@ -26,6 +27,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         prog="before-cli", description="Local evidence for 'it worked yesterday'."
     )
+    parser.add_argument("--lang", choices=("en", "ru"), default="en")
     sub = parser.add_subparsers(dest="action", required=True)
     snapshot = sub.add_parser("snapshot", help="Capture current settings without network requests")
     snapshot.add_argument("output")
@@ -45,6 +47,7 @@ def main(argv: list[str] | None = None) -> int:
         item.add_argument("--output", help="Write .md or .html (redacted)")
     sub.add_parser("history", help="List saved local snapshots")
     args = parser.parse_args(argv)
+    set_language(args.lang)
     try:
         if args.action == "compare":
             analysis = analyze(
@@ -60,7 +63,7 @@ def main(argv: list[str] | None = None) -> int:
             if args.action == "snapshot":
                 atomic_write(Path(args.output), current.to_json())
                 store.save(current)
-                print(f"Снимок сохранён: {args.output}")
+                print(tr(f"Снимок сохранён: {args.output}"))
                 return 0
             probes = {"local_proxy": local_proxy_checks(current)}
             if args.probe:
@@ -71,12 +74,12 @@ def main(argv: list[str] | None = None) -> int:
         if args.output:
             output = Path(args.output)
             atomic_write(output, html_report(text) if output.suffix.lower() == ".html" else text)
-            print(f"Отчёт сохранён: {output}")
+            print(tr(f"Отчёт сохранён: {output}"))
         else:
             print(text)
         return 0
     except (OSError, ValueError, sqlite3.Error) as exc:
-        print(f"BEFORE: {exc}", file=sys.stderr)
+        print(f"BEFORE: {tr(str(exc))}", file=sys.stderr)
         return 2
 
 

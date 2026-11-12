@@ -8,6 +8,7 @@ from pathlib import Path
 
 from . import __version__
 from .engine import SECTION_NAMES
+from .i18n import language, tr
 from .models import Analysis
 
 
@@ -76,7 +77,7 @@ def markdown(analysis: Analysis, private: bool = True) -> str:
             "",
         ]
     )
-    result = "\n".join(lines)
+    result = tr("\n".join(lines))
     return redact(result) if private else result
 
 
@@ -96,16 +97,18 @@ def html_report(markdown_text: str) -> str:
         elif line:
             blocks.append(f"<p>{safe}</p>")
     return (
-        """<!doctype html><html lang="ru"><head><meta charset="utf-8">
+        """<!doctype html><html lang="__LANG__"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'">
-<title>BEFORE · Диагностический отчёт</title><style>
+<title>BEFORE · __TITLE__</title><style>
 *{box-sizing:border-box}body{margin:0;background:#f2f4f1;color:#213330;font:15px/1.7 system-ui,sans-serif}
 main{max-width:850px;padding:44px;margin:36px auto;background:white;border:1px solid #dde4dc;border-radius:18px}
 h1{font-size:34px;letter-spacing:-1px}h2{margin-top:38px;padding-top:22px;border-top:1px solid #e1e7e0}
 h3{font-size:18px;margin:26px 0 9px;color:#136d59}p{margin:8px 0;overflow-wrap:anywhere;white-space:pre-wrap}
 .bullet{padding-left:14px} @media print{body{background:white}main{border:0;margin:0;padding:0}}
-</style></head><body><main>"""
+</style></head><body><main>""".replace("__LANG__", language()).replace(
+            "__TITLE__", tr("Диагностический отчёт")
+        )
         + "\n".join(blocks)
         + "</main></body></html>"
     )

@@ -55,7 +55,8 @@ python run.py
 `python run.py --demo` opens a clearly marked, entirely synthetic example. Demo
 data is never mixed into your history or presented as a scan of your computer.
 
-The interface is currently in Russian.
+The interface and exported reports default to English. Use the **РУС**
+button for an immediate in-app switch, or launch with `python run.py --lang ru`.
 
 ## What is covered
 

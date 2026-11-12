@@ -2,6 +2,7 @@
 
 ## 0.1.0
 
+- English-first interface and reports with an immediate Russian language switch.
 - Native desktop UI for saving, selecting and comparing local working states.
 - Windows and Linux read-only collectors for proxies, PATH, commands, hosts and
   a deliberately small set of network services.

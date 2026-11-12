@@ -2,8 +2,9 @@ BEFORE 0.1.0 — initial delivery, 2026-11-12
 
 Executed: Linux x86-64, Python 3.12.14, PySide6 6.8.3, Qt offscreen.
 
-PASS 75 pytest checks (rules, privacy, malformed imports, storage, actual
-     loopback connections, proxy CONNECT routing, CLI export, native Qt workflow).
+PASS 78 pytest checks (rules, privacy, malformed imports, storage, actual
+     loopback connections, proxy CONNECT routing, CLI export, native Qt workflow,
+     English-first output and Russian language fallback).
 PASS 14/14 synthetic evidence scenarios; see benchmarks/results.json.
 PASS Ruff lint and formatting checks.
 PASS Native Linux PyInstaller build with stripped shared libraries.

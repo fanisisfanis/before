@@ -40,6 +40,7 @@ from . import __version__
 from .collect import capture, valid_command
 from .demo import example
 from .engine import SECTION_NAMES, analyze
+from .i18n import language, set_language, tr
 from .models import Analysis, Snapshot
 from .probes import local_proxy_checks, network_checks, validate_host
 from .report import html_report, markdown
@@ -111,8 +112,18 @@ QToolTip {color:#243f30;background:#f9fbf5;border:1px solid #d3dfcd;padding:5px;
 """
 
 
+class TranslatedLabel(QLabel):
+    def setText(self, text: str) -> None:  # noqa: N802 - Qt API name
+        super().setText(tr(text))
+
+
+class TranslatedButton(QPushButton):
+    def setText(self, text: str) -> None:  # noqa: N802 - Qt API name
+        super().setText(tr(text))
+
+
 def label(text: str, name: str = "", wrap: bool = False) -> QLabel:
-    widget = QLabel(text)
+    widget = TranslatedLabel(tr(text))
     widget.setTextFormat(Qt.TextFormat.PlainText)
     if name:
         widget.setObjectName(name)
@@ -125,7 +136,7 @@ def label(text: str, name: str = "", wrap: bool = False) -> QLabel:
 
 
 def button(text: str, name: str = "", callback=None) -> QPushButton:
-    widget = QPushButton(text)
+    widget = TranslatedButton(tr(text))
     if name:
         widget.setObjectName(name)
     widget.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -186,8 +197,8 @@ class Timeline(QWidget):
             x = int(left + (right - left) * i / 20)
             painter.drawLine(x, middle - 4, x, middle + 4)
         for x, text, fill in (
-            (left + 35, "ВСЁ РАБОТАЛО", "#719553"),
-            (right - 35, "СЕЙЧАС", "#214e37"),
+            (left + 35, tr("ВСЁ РАБОТАЛО"), "#719553"),
+            (right - 35, tr("СЕЙЧАС"), "#214e37"),
         ):
             painter.setBrush(QColor(fill))
             painter.setPen(QPen(QColor("#f3f5f1"), 5))
@@ -200,7 +211,7 @@ class Timeline(QWidget):
 class ReportDialog(QDialog):
     def __init__(self, analysis: Analysis, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("BEFORE · Отчёт")
+        self.setWindowTitle(tr("BEFORE · Отчёт"))
         self.resize(780, 640)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(24, 24, 24, 24)
@@ -229,7 +240,7 @@ class ReportDialog(QDialog):
 
     def save(self):
         path, selected = QFileDialog.getSaveFileName(
-            self, "Сохранить отчёт", "before-report.html", "HTML (*.html);;Markdown (*.md)"
+            self, tr("Сохранить отчёт"), "before-report.html", "HTML (*.html);;Markdown (*.md)"
         )
         if not path:
             return
@@ -243,7 +254,7 @@ class ReportDialog(QDialog):
             )
             self.status.setText("Отчёт сохранён")
         except OSError as exc:
-            QMessageBox.warning(self, "Не удалось сохранить", str(exc))
+            QMessageBox.warning(self, tr("Не удалось сохранить"), tr(str(exc)))
 
 
 class Window(QMainWindow):
@@ -258,7 +269,7 @@ class Window(QMainWindow):
         self.analysis: Analysis | None = None
         self.demo = False
         self.symptom = "all"
-        self.setWindowTitle("BEFORE · Что изменилось?")
+        self.setWindowTitle(tr("BEFORE · Что изменилось?"))
         self.setMinimumSize(960, 680)
         self.resize(1190, 810)
         icon = Path(__file__).parent / "assets/icon.png"
@@ -282,7 +293,14 @@ class Window(QMainWindow):
         layout.setContentsMargins(22, 30, 22, 20)
         layout.setSpacing(13)
         layout.addWidget(label("◴ BEFORE", "brand"))
-        layout.addWidget(label("ВЕРНИСЬ К ФАКТАМ", "sideCaption"))
+        caption_row = QHBoxLayout()
+        caption_row.addWidget(label("ВЕРНИСЬ К ФАКТАМ", "sideCaption"), 1)
+        language_button = button(
+            "РУС" if language() == "en" else "EN", "sideLink", self.switch_language
+        )
+        language_button.setFixedWidth(52)
+        caption_row.addWidget(language_button)
+        layout.addLayout(caption_row)
         layout.addSpacing(26)
         row = QHBoxLayout()
         row.addWidget(label("Рабочие состояния", "sideTitle"), 1)
@@ -296,7 +314,9 @@ class Window(QMainWindow):
         self.history.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.history.customContextMenuRequested.connect(self.history_menu)
         self.history.setToolTip(
-            "Выбери состояние, с которым сравнить текущие настройки. Правый клик: экспорт или удаление."
+            tr(
+                "Выбери состояние, с которым сравнить текущие настройки. Правый клик: экспорт или удаление."
+            )
         )
         layout.addWidget(self.history, 1)
         self.capture_button = button("＋  Сохранить состояние", "primary", self.save_snapshot)
@@ -332,7 +352,7 @@ class Window(QMainWindow):
         header.addLayout(title, 1)
         self.compare_button = button("Сравнить сейчас  ↗", "action", self.run_diagnosis)
         self.compare_button.setToolTip(
-            "Прочитать текущие настройки и сравнить с выбранным состоянием."
+            tr("Прочитать текущие настройки и сравнить с выбранным состоянием.")
         )
         header.addWidget(self.compare_button)
         layout.addLayout(header)
@@ -374,7 +394,7 @@ class Window(QMainWindow):
         commands.setContentsMargins(0, 0, 0, 0)
         self.command_edit = QLineEdit()
         self.command_edit.setObjectName("commandInput")
-        self.command_edit.setPlaceholderText("Имя команды, например python или ffmpeg")
+        self.command_edit.setPlaceholderText(tr("Имя команды, например python или ffmpeg"))
         self.command_edit.setMaxLength(100)
         self.command_edit.returnPressed.connect(self.run_diagnosis)
         commands.addWidget(self.command_edit, 1)
@@ -384,9 +404,11 @@ class Window(QMainWindow):
         self.network_row = QWidget()
         network = QHBoxLayout(self.network_row)
         network.setContentsMargins(0, 0, 0, 0)
-        self.network_check = QCheckBox("Проверить прямой маршрут и прокси к сайту")
+        self.network_check = QCheckBox(tr("Проверить прямой маршрут и прокси к сайту"))
         self.network_check.setToolTip(
-            "Отправить обычные HTTPS HEAD-запросы. Прямой запрос обходит явный прокси; отчёт и настройки никуда не отправляются."
+            tr(
+                "Отправить обычные HTTPS HEAD-запросы. Прямой запрос обходит явный прокси; отчёт и настройки никуда не отправляются."
+            )
         )
         self.network_check.toggled.connect(lambda checked: self.host_edit.setEnabled(checked))
         network.addWidget(self.network_check, 1)
@@ -463,32 +485,483 @@ class Window(QMainWindow):
         self.report_button.setEnabled(False)
         layout = self.content()
         layout.addStretch(1)
-   -v�]��G����ƭy��ܮ��Y'�)����~G�-~�	O?������L�Rzl���:{c�z���@���;��^��W�K�����>~O~m��Km١���7]��o�!4o�ILO�zx:h��2nk����j��<�(*D�S�}�$2������LuJ6%�/q�.��ܮ��?ߤS�7mڢ�&ǧ6�s�d��?ܧ�IԿ$������^I+�� �6C<Xd݄�{�F)�>U�J�w��?�뫴��\2m�� �8�f2K,V�Yb������)�?�	-��\|�������ϟwΥ�!��~�x��=�/q�.��v�v���۔38m\r^{{`v��k]�A#д���H��w�E8if�W�1P�T�j�E;���ϯ�&�O���݀�[����Un��"�M�c�- �W���}J�p�r�_���5>��"���\?{�ӥP{t!e�T.�����<s���=Q_��^ ����,-_GbQP���	Ē%St�=�^�>I'���G��u�!%�K���*m���.}dų�}8T�I+
-DA��>\H(e �.;��{�}�'}m1�w~I6+ē&h��{o*����F#D��ж�{e��gɲ�Ǽ��/��Z���0~�` 1�VW���?�1g���u�����x��V|�Љ77�f�����D���>E1{K߾����*ɛ�ٻ�Q�����!���viUd'���>p�*���?/�[���g�խ�ǃ�<L;��d�Wo���y�*���+�CF{�ѱlI>ķ%}�;{�ؖ��0�jݨ�Gs�ͥ�!�m9f����g���#_��	��"�ґL���u ����~����K$"۷CBa��9�?�`}��j�F6	��B
-��je�g�g0]4�W+܇�>%��{~�Y1Pb��w�̙�ȼ�,Z�����~.��O�&jWm��)�n@p(1T`�8�X?Υ>}}i�w��_W�&���K�U�}�t1c������D65󱗫��OE����A־���^62�OFD���_H�X.���o�Z��G|BV3�!�����ѭ ����)_5��T&�U��W�@��Ȭ�?ô��w�i3SKE��c
-B�Ƣhr �|���N�7�h�/#�玏���/��8e�T����5T�v����*���,m�?����>� �q� (Aֿ��]5�*��vm��.P�Ebc��G�fϭC�x��j�(û�4���Yڦ���#I:�7������W�� @T�h�!�*��&q�%�k��%����`�L�A T" �o�	/8�p�=�_H�F2˳U4�f�yʪI)GD��|�d�����je�}������z0��\F(X4Na,=s����I���?�����w�(S��ē'h�a��a}+'�>�2�q��`@���ɕ�-�uţ�����j�]V����)�T�� "���
-/<�p&U���H$o��%����l6�APW�,����k:x�e��ߺ��ݝ��,Z�^���AR���v�<c�Z�)���@���h���SV|�AR����g�A�d��:[����~�APlT��R�]���a�_�����5;Z�e��q�¤�@��,Y�9��3a�2�W�����H+��f� ��QM�� ѵ�6{b�������j��s.Z�$�k{6	F5Rp�.��q�$ᖱ�XJ�D�l��ŷ��FB+�V�� #����<ͥ(.�f{���Z�i{Zօ	G5R`�jp��fF���2�\z @n��ήm*�S��AR` !�-�+�E��z߻�&�I�m����k�P(�0 q��QE�;���X��p�@�Q��	F�RP�H�p�`�ő�u_�-��u���uaY�V)��� "tkwt��o�����9�͇u�15N��	F��/��M���7�놝��Lۼ�D�S�BR�`���!GԒI�'��WԄP�b�������~�	D%R0�5 L�5O-/�fmn^ܵ M�	D��N&�w��A�X��8V(�@��躆����a��,�s�I���W>Dp��PC�|��b����P�:��Z����%i݉m�e^����|�A
-��j긇@*�R�K���*��$����-���՛f֬t���>]��CF{�ih˶�A!�S���D��bZ�\�L��vw�"�j�9���l�{H�N����>���9S��� "���jJ�4���u����}
-�j�1������"���tJ$¾�{[7�)�~��P�T� ;�Cqq�d�o�t��%���ў'�!�˱{�vx�@��-f�(�)�l�� ���|3a�
-m#���0{MS�r;��xI��58"�RS�aSPՁ~~���
-TD���>�L��5�B(���BRCx�O�M\K�ӈ�P AT6�`���p^2C{tu��xKR��S% W��v��C�{a4�X;��#���ql����%�q8�#��?�Fϝ1LҒQ�jGk������)J� �Ww��L�
-��	��cX���+C��7ST���7�J�H�X�w���&w��-ȣ�)1!3Jӓ��	I(K�"ꆧ�6!" /�{U9]�Z������*�"F!�\�������f3�P�|�l��}�C�M�~��/�vbٖ��A��j��DB��rj��=�B� �E��[^��bرv7
-n�B�Ҧ�/�	έf鐍�0��Ml"2ٷo>hWm�o\� \�p&�պ!&Q��e�����ME8�[6ud0���uIlo�vX�k>�~��T�X�dM���l����R�u�w�eٰ�!G���G�B���zY�P�8�Fh�f1�@�{/wm5.+���-R_��N0aV�8L|^���q9�&���� ;l��T�k-�u��Q-�e�)�L�znk$S,ɉ��C/�NoB5�t�S�� o��b�� �X���"�Y�U5X�:��\�۷��c<� ɵihm��)�g�4Q\��f(D�b���-P�?E-�{<wSWd��Gn�	t>�CҒ��J���n�*M�����#'��UD��f(D��ٻe~icl�A�u�^e�/x��AP�T� �l۸��o�$�N��A|�P^�A& |�wrUY^� �u:����6aT@����@��r��B���)$�Y��1�c��� �8�z�M�{Q[��w��5�͝=B��R(HT����W�����W��|P-xy�Q-�fR)����	yn�e
-�r��fpҊYf̝H�a�J���R� �i�Θ�kh�-hh�*\�Μ�҅�R�����/�Wn%���?L�s&��=���Z)�N8��Rp��/�Wo(y}�l9�4'yϹ�ɗ�P�SU!*P�Eb W.�ˡ�곭4LP,X~���5$ԕ E��H�]���͛Uڊ��g^��'SMͯ��f�R���vy�d�A#��_7!WQP���`�v#
-�z�u���"]�n��x\Î��2h�*(�	(.\?A��7H�n%��lzR�`���N�5XR(T�������-�!�t�l������SG� E �h��$�����.]��z2[����q�4s2��5X>(X 4#2�7��v���p��y �w��9�*�G����	.�+��ݾ���JU��)$�{��o����*G�y&{�+�]x�i��CL��d	ϙ9�;qO%�)��W�hR+�HU>�P���|��1��*�K�Ɠ-4�<�Z<�Uր��R�V������ND���]���Eq����aW�R)ޑ�yȥw�&��j�G$Z���`Җ�f�Sm4L#�dzN�F��e^	
-��ST��s��U5	V
-�$(-�	^�v�AV�E���%��i����^���x�T���>�8r�(�Y7O!�.p��N��A�����z�W��������Vt,�"�-���\ɯ�ʦ��A�q�vp����{�}���I+�ű�����߀�Jjhc?��V�{m(�E���47L�4��3�h�j �5���PŎoD�^�ط��U� ����ȕ����AI�{�\�`����F��cx|tٻ!��̌ST�F)�����q���2���r��I+��Jd��B�培R������V��&����,���dWSW-;��?F�-���:��Mt5X
-�E'�d�����J���,��GfF��0������s���nK,TlIS�?�T��=y���؊ECg�'���/�t��b�#�cE}�t�l������q�v�+�#�4��(-� �}�|?���a��b��� �	��n�	��`}���F!E�C��x��3ƑJ�x[e4LR,Z�����=WSV]����|���0˷������i>�=�"���}OU>ˍ#����߱*y�ٖ}�o�A!�<�娯f2�da9�k�u����Np������w�[7nۓ�s�����60��',);Jߪ}��v�F���B���+h���VNcSS���rkh�
-��`�T�����c��GVg�՞��j�-tt�9���{�y}G~C�Ė��}�]�%�_$߹wC��}�C���s߀7MD�	2�%�v���}�d~���twf��� 	p��ڧ\�ЁWZ��(�A>��!������y�����(< NP�?�O�~��C6�����w���#�~�3�_6�Ώܝ�?�'�4����%/���Pϐ�:�ػ8���G�q5��<��R�>|�[�z�E�k!�+�ۀ��j�������Uq۔��џ��J���i(z���u�@"0�����}g��u�( �
-��r�x�����1�_&�ޝVw '��/��������f�����u����U ���hc��v@]�?<$�IG��=�{�GVg���H0��5�p��&������P���65&���=��(�e $Q� ���b��w߭K�}y/^��I`���ďξy]\8��h����w�f�<s����q�jcK�Z�z;����~]���SSش�S�ȥ�q%uvs}�e}�&��i���~��$s,�\�����㜯@�5rځ
-\Կf\��t7��o�S��~�b۵C~c�V_���|�h,?��q/�NO�r������3�_?�\��zU�u�qֿ������]�K~A(��g����L�nKq�a�$3J��_{oIt�f���ۺ붟��1=Ss~M . Cxzs:�+���%ߗ����@�|��t�����ba��Q ^̿���!It�8���p�}�MQȱ����q$�E��iwq׮����_)TnX �H�ǵ=ǹ�GF{�^�yБ �h/��_���/{twSW��{��w�����<�k��o{>���=_#�1�&��.���6�����kO�G-ˀ 8^W�G��=�1O������vr�����=y��L�B�.�ҥ"E�5�F�@���8S�뿙ǚ�ƑN�JZ�~��}'��Yf��_���@B6�&(-62�q���8k|�֘��8�p�#��wȘ=���Z��U��ᨂu�.���M�s4�w=~z$�e��������Bj���3]]��̕�ֈ�j��d�I)��͍q�T��+��o��J�SS#�5yb�)��H��p�F0H8n�!�>�,���qǶ�q۔�0aU<�?��|���Ny}~�v���3����~J�@��#��On��e]q컶�!�-�TSSb޾M|��Q�X���x;�& ��-n������<�.��^�MO,U,�����ձ%�KT��˜�>I'�W1�2P p��`�cq�q�u�Sɚ��DF������%��ί��oM��B6-��ȩ�H�6 Ba-z�����_μ�^�Mh�,�����VP��IIlo�W�˿��q0�<�Y[�2P�5";�2]}̺����)-�8�����/��z�}s�݋nI`�svYi���?��{T���n�Je�xe2p�+.��51����������~^�}��C��'��n<�)��T�Л&��\�BNyB.%�.���Zy鈦��{�
-ޗ�Դr��a;��H�Z�c���SS`��V,��O����jjKt��;��q$�K���������4���P�	w���:d����}f̟CVdnB�<��F.yv�-��Dڳm4�U\ԋDB�Cxv������»��bI�G
-�r��C��3�w�g��9�KPY��!��x×��߷��m}w-�q6�]��r���_����4��]���̤Z�-k���s�B�baE����X�
-�Wmc��;kl�ao@&5���xϼ{׾��7,E��Kw�>�u3/��~���:&�a�X:p�9M<m5�2͡L�cw-X�EI(\��ػ;����m�i�cW]^PR�:�M��1������VC�jpك|�@��H�H5�d8ޟb��4�{'kT�b�� w�g������[�����y���8�f��r�LJ�""��ⶌl�t�����2kK"Y���[�C"l�8r�Gn8�'!7�!�ˣ��zD��,���\�CVe��G���s*��U���7{8�|2B�"��ao:81������m��u�oX�՛f��Omˠ�6��ĳ�w����-t�d�h/GaQ�NHĜ�D�D&MD��G���������i���r���J�"���;�7���?��]Ml]!U�t�(� |J�K��^{}��S[&����c�gݮi ���w@F�˙�D�O*O,Wf����ۏ��t��E �d�Ē���2�7�!hhnM��K$"뙷Zշ?�ܶ$��\x3ȀQ|�� !c����>O�(�^�|���E�ך`��:u�۶C.d���D��&��jh�"1qp���^8��w�Rܷ��aC�������qH+��IDڳ5��[��v%�QA!_|>P 0�G"obۑ]?�o9�K�YJ���B���XK��e�>���PI�aT�J�%����}+����a���&ic�*�� �6����ؖe��p��rji�"���9S��&�EfA1Ŷ���J��=�j�j��j�է�ϊ��a��`�VU�*��s�&����#Y&�,�8sî�����*RK������w����h5���sv���( �L�(�M�E���Eq�4p��<N	q��)��D�.���I�d�m��-g�)p'&j���$�"~3/�13M���X���s���j�WX*��G�D�B�{o[��� C+t}Pp�B�\��cȵ4�I+���pd8qG`P4N4k�gWI���5�EH����sdY�Il]��;�
-/9��1ĒME3�å��!<
-�§Wdдٷc..�o/>��?��<N!��C+�<q(~��nK4P"7<���p9�l���~a�n���� �ዀ�H��kKpR�d�2����~t��ϙ;�wM=��GSS�w�!�l�r4ݒk�
--�ủ��(��u@�c�a�տ��&�6�f����4���Р`��r��TT���8�%��=��s%2ks!E{7��b�8��8���:����1M�m�=�w\"�
-9[ka�i�o�Ϟ�mf��ml��E;�F�k:�T�C��C�13ML��'8�&��5�F2l�
-[X���
-���^ɭj��z�S+�W�ָ��#��E�u7��0�%<�v��|�n�u����yr��o�ǡ�k-��	��@8���8E�VJ�;�f�ߗXѴ�/��DnnJ���@�'D���� �D@�=��
-��� ��cB�d���HͺT���d��\��'8tf��@��~��|��n�!�,�;јM0�V�M������Ow�3�i�s���$hjL�9��F�u������m�xHj�^2M;�fʦ���m���J����i{�7��h��l���6��F�����;�3�7B����-�AH�+]��G�c{�x24A��X{��G{da�S��9˲�cw�";���u�{����(SVJ ��"����)�U��LV(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� �( R(�� ��}Ê�+X�<   %9�	�
+        card, body = frame("card", 30)
+        body.addWidget(label("ОДНА ТОЧКА ОТСЧЁТА", "eyebrow"))
+        body.addSpacing(3)
+        body.addWidget(label("Запомни момент,\nкогда всё работает.", "heroTitle", True))
+        body.addWidget(
+            label(
+                "BEFORE сохранит важные настройки. Когда возникнет проблема, ты увидишь точные изменения и способы проверить причину.",
+                "heroText",
+                True,
+            )
+        )
+        body.addWidget(Timeline())
+        row = QHBoxLayout()
+        row.addWidget(button("Сохранить рабочее состояние", "action", self.save_snapshot))
+        row.addWidget(button("Проверить без снимка", callback=self.run_diagnosis))
+        row.addStretch()
+        body.addLayout(row)
+        body.addWidget(
+            label("Снимок: прокси · PATH · команды · hosts · выбранные службы", "tiny", True)
+        )
+        layout.addWidget(card)
+        row = QHBoxLayout()
+        row.addWidget(
+            label(
+                "Настройки читаются локально. Права администратора обычно не нужны.", "muted", True
+            ),
+            1,
+        )
+        row.addWidget(button("Посмотреть пример  ↗", "link", self.show_demo))
+        layout.addLayout(row)
+        layout.addStretch(2)
+
+    def render_analysis(self):
+        if self.analysis is None:
+            self.render_empty()
+            return
+        result = self.analysis
+        layout = self.content()
+        self.report_button.setEnabled(True)
+        summary, body = frame("summary", 20)
+        count = len(result.changes)
+        if not result.baseline:
+            title = "Проверка текущего состояния"
+            description = (
+                "Рабочей точки пока нет. История изменений станет доступна после сохранения снимка."
+            )
+        elif count:
+            title = f"Зафиксировано изменений: {count}"
+            description = (
+                "Сравни факты с симптомом. Совпадение по времени ещё не доказывает причину."
+            )
+        else:
+            title = "В сопоставимых настройках изменений нет"
+            description = (
+                "Это граница этой проверки. Исправность приложений и оборудования не подтверждена."
+            )
+        row = QHBoxLayout()
+        row.addWidget(label(title, "cardTitle", True), 1)
+        row.addWidget(label("СНИМОК ↔ СЕЙЧАС" if result.baseline else "СЕЙЧАС", "eyebrow"))
+        body.addLayout(row)
+        body.addWidget(label(description, "muted", True))
+        layout.addWidget(summary)
+        if result.findings:
+            layout.addWidget(label("ЧТО МОЖНО ПРОВЕРИТЬ", "eyebrow"))
+            for finding in result.findings:
+                layout.addWidget(self.finding_card(finding))
+        else:
+            card, body = frame("card")
+            body.addWidget(label("Пока нет подходящего объяснения", "cardTitle"))
+            body.addWidget(
+                label(
+                    "Проверь конкретную команду или подключение во вкладках выше. BEFORE показывает только то, что удалось установить.",
+                    "muted",
+                    True,
+                )
+            )
+            layout.addWidget(card)
+        layout.addWidget(self.changes_card(result))
+        card, body = frame("notice", 16)
+        toggle = button("▸  Границы этой проверки", "details")
+        body.addWidget(toggle)
+        text = label(tr("\n\n".join(result.limitations)), "muted", True)
+        text.hide()
+        body.addWidget(text)
+        toggle.clicked.connect(lambda: self.toggle_detail(toggle, text, "Границы этой проверки"))
+        layout.addWidget(card)
+        layout.addStretch()
+        self.scroll.verticalScrollBar().setValue(0)
+
+    def finding_card(self, finding):
+        card, body = frame("warningCard" if finding.severity == "warning" else "infoCard", 20)
+        top = QHBoxLayout()
+        top.addWidget(label(tr(finding.title), "cardTitle", True), 1)
+        top.addWidget(
+            label(
+                "ФАКТ" if finding.certainty == "fact" else "ГИПОТЕЗА",
+                "fact" if finding.certainty == "fact" else "hypothesis",
+            )
+        )
+        body.addLayout(top)
+        body.addWidget(label(tr(finding.explanation), "muted", True))
+        details = QWidget()
+        detail_layout = QVBoxLayout(details)
+        detail_layout.setContentsMargins(0, 5, 0, 0)
+        detail_layout.setSpacing(9)
+        detail_layout.addWidget(label("ДОКАЗАТЕЛЬСТВА", "eyebrow"))
+        for evidence in finding.evidence:
+            item = label("•  " + tr(evidence), wrap=True)
+            item.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            detail_layout.addWidget(item)
+        detail_layout.addSpacing(4)
+        detail_layout.addWidget(label("СЛЕДУЮЩИЙ ШАГ", "eyebrow"))
+        for step in finding.steps:
+            detail_layout.addWidget(label("→  " + tr(step), wrap=True))
+        if finding.rule.startswith("proxy") or finding.rule == "local_proxy_unreachable":
+            if sys.platform == "win32" and not self.demo:
+                detail_layout.addWidget(
+                    button(
+                        "Открыть настройки прокси Windows",
+                        callback=lambda: QDesktopServices.openUrl(
+                            QUrl("ms-settings:network-proxy")
+                        ),
+                    )
+                )
+        details.setVisible(finding.severity == "warning")
+        toggle = button(
+            ("▾" if details.isVisible() else "▸") + "  Доказательства и следующий шаг", "details"
+        )
+        # isVisible() is false while an ancestor is not shown; use hidden state.
+        toggle.setText(("▸" if details.isHidden() else "▾") + "  Доказательства и следующий шаг")
+        toggle.clicked.connect(
+            lambda: self.toggle_detail(toggle, details, "Доказательства и следующий шаг")
+        )
+        body.addWidget(toggle)
+        body.addWidget(details)
+        return card
+
+    @staticmethod
+    def toggle_detail(toggle, widget, text):
+        widget.setVisible(widget.isHidden())
+        toggle.setText(("▸" if widget.isHidden() else "▾") + "  " + text)
+
+    def changes_card(self, analysis):
+        card, body = frame("card", 20)
+        toggle = button(f"▸  Все изменения · {len(analysis.changes)}", "details")
+        body.addWidget(toggle)
+        details = QWidget()
+        changes_layout = QVBoxLayout(details)
+        changes_layout.setContentsMargins(0, 5, 0, 0)
+        changes_layout.setSpacing(14)
+        if not analysis.changes:
+            changes_layout.addWidget(
+                label(
+                    "Нет различий в доступных для сравнения данных."
+                    if analysis.baseline
+                    else "Сначала выбери рабочий снимок слева.",
+                    "muted",
+                    True,
+                )
+            )
+        for change in analysis.changes:
+            changes_layout.addWidget(
+                label(
+                    f"{tr(SECTION_NAMES[change.section])}  /  {tr(change.subject)}",
+                    "cardTitle",
+                    True,
+                )
+            )
+            values = label(tr(f"Было: {change.before}\nСтало: {change.after}"), "muted", True)
+            values.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            changes_layout.addWidget(values)
+        details.hide()
+        toggle.clicked.connect(
+            lambda: self.toggle_detail(toggle, details, f"Все изменения · {len(analysis.changes)}")
+        )
+        body.addWidget(details)
+        return card
+
+    def change_symptom(self, value):
+        self.symptom = value
+        self.command_row.setVisible(value == "command")
+        self.network_row.setVisible(value == "internet")
+        if self.analysis:
+            self.analysis = analyze(
+                self.analysis.current,
+                self.analysis.baseline,
+                value,
+                self.command_edit.text().strip() if value == "command" else "",
+                self.analysis.probes,
+            )
+            self.render_analysis()
+        if value == "command":
+            self.command_edit.setFocus()
+
+    def select_baseline(self):
+        item = self.history.currentItem()
+        if item is None:
+            self.baseline = None
+            return
+        self.baseline = self.store.get(item.data(Qt.ItemDataRole.UserRole))
+        self.demo = False
+        self.demo_bar.hide()
+        self.mode_pill.setText("Только чтение")
+        self.update_subtitle()
+        if self.analysis and self.analysis.current.machine_id != "demo":
+            self.analysis = analyze(
+                self.analysis.current,
+                self.baseline,
+                self.symptom,
+                self.command_edit.text().strip() if self.symptom == "command" else "",
+                self.analysis.probes,
+            )
+            self.render_analysis()
+        else:
+            self.analysis = None
+            layout = self.content()
+            layout.addStretch()
+            card, body = frame("card", 30)
+            body.addWidget(label("ТОЧКА ОТСЧЁТА ВЫБРАНА", "eyebrow"))
+            body.addWidget(label(self.baseline.label, "heroTitle", True))
+            body.addWidget(
+                label(f"{self.baseline.platform} · {timestamp(self.baseline.captured_at)}", "muted")
+            )
+            body.addSpacing(10)
+            body.addWidget(
+                label(
+                    "Сравни её с текущими настройками компьютера. Проверка покажет точные различия и подходящие объяснения.",
+                    "heroText",
+                    True,
+                )
+            )
+            body.addWidget(button("Сравнить сейчас", "action", self.run_diagnosis))
+            layout.addWidget(card)
+            layout.addStretch(2)
+            self.report_button.setEnabled(False)
+        self.status.setText("Рабочая точка выбрана. Можно сравнивать.")
+
+    def set_busy(self, busy: bool, message: str = ""):
+        self.busy = busy
+        self.progress.setVisible(busy)
+        self.compare_button.setEnabled(not busy)
+        self.capture_button.setEnabled(not busy)
+        self.import_button.setEnabled(not busy)
+        self.history.setEnabled(not busy)
+        self.filter_container.setEnabled(not busy)
+        self.command_row.setEnabled(not busy)
+        self.network_row.setEnabled(not busy)
+        # Also disable empty-state actions inside the content while a task runs.
+        self.scroll.setEnabled(not busy)
+        if message:
+            self.status.setText(message)
+
+    def switch_language(self):
+        """Switch the whole window immediately; English remains the default next launch."""
+        set_language("ru" if language() == "en" else "en")
+        replacement = Window(self.store)
+        replacement.show()
+        QApplication.instance()._before_window = replacement
+        self.close()
+
+    def start_task(self, function, done, message):
+        if self.busy:
+            return
+        self.set_busy(True, message)
+        task = Task(function)
+        self._task = task
+
+        def finished(result):
+            self.set_busy(False)
+            done(result)
+
+        def failed(error):
+            self.set_busy(False, "Проверка не завершена. Подробности в сообщении.")
+            QMessageBox.warning(self, tr("BEFORE · Не удалось выполнить"), tr(error))
+
+        task.signals.done.connect(finished)
+        task.signals.failed.connect(failed)
+        self.pool.start(task)
+
+    def save_snapshot(self):
+        if self.busy:
+            return
+        name, ok = QInputDialog.getText(
+            self,
+            tr("Рабочее состояние"),
+            tr("Сохраняй, когда нужные программы работают.\nНазвание:"),
+            text=tr("Всё работает"),
+        )
+        if not ok or not name.strip():
+            return
+        custom = self.command_edit.text().strip() if self.symptom == "command" else ""
+        if custom and not valid_command(custom):
+            QMessageBox.information(
+                self, tr("Имя команды"), tr("Введите имя команды без аргументов.")
+            )
+            return
+
+        def work():
+            snapshot = capture(self.store.machine_id, name, custom)
+            self.store.save(snapshot)
+            return snapshot
+
+        def done(snapshot):
+            self.leave_demo(render=False)
+            self.analysis = None
+            self.refresh_history(snapshot.id)
+            self.select_baseline()
+            self.status.setText(
+                "Состояние сохранено локально. Вернись, когда понадобится сравнение."
+            )
+
+        self.start_task(work, done, "Сохраняю рабочую точку…")
+
+    def run_diagnosis(self):
+        if self.busy:
+            return
+        custom = self.command_edit.text().strip() if self.symptom == "command" else ""
+        if self.symptom == "command" and not valid_command(custom):
+            QMessageBox.information(
+                self,
+                tr("Имя команды"),
+                tr("Введите имя команды, например python или ffmpeg, без аргументов."),
+            )
+            self.command_edit.setFocus()
+            return
+        target = None
+        if self.symptom == "internet" and self.network_check.isChecked():
+            try:
+                target = validate_host(self.host_edit.text())
+            except (ValueError, UnicodeError) as exc:
+                QMessageBox.information(self, tr("Имя сайта"), tr(str(exc)))
+                return
+        selected = self.baseline
+        mode = self.symptom
+
+        def work():
+            current = capture(self.store.machine_id, "Текущая проверка", custom)
+            probes = {"local_proxy": local_proxy_checks(current)}
+            if target:
+                probes["network"] = network_checks(current, target)
+            return analyze(current, selected, mode, custom, probes)
+
+        def done(result):
+            self.leave_demo(render=False)
+            self.baseline = selected
+            self.analysis = result
+            self.update_subtitle()
+            self.render_analysis()
+            self.status.setText(
+                f"Проверено: {timestamp(result.current.captured_at)} · BEFORE не изменял настройки системы"
+            )
+
+        self.start_task(work, done, "Проверяю настройки и собираю доказательства…")
+
+    def show_demo(self):
+        if self.busy:
+            return
+        old, current, probes = example()
+        self.demo = True
+        self.demo_bar.show()
+        self.mode_pill.setText("Пример")
+        self.subtitle.setText(
+            "Два изменения: забытый локальный прокси и исчезнувший каталог Python."
+        )
+        self.analysis = analyze(
+            current, old, self.symptom, "python" if self.symptom == "command" else "", probes
+        )
+        self.render_analysis()
+        self.status.setText(
+            "Демонстрация. Данные компьютера не читаются, сетевые запросы не выполняются."
+        )
+
+    def leave_demo(self, render=True):
+        self.demo = False
+        self.demo_bar.hide()
+        self.mode_pill.setText("Только чтение")
+        self.update_subtitle()
+        if render:
+            self.analysis = None
+            if self.baseline:
+                self.select_baseline()
+            else:
+                self.render_empty()
+            self.status.setText("Готово к проверке компьютера")
+
+    def import_snapshot(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self, tr("Импорт снимка BEFORE"), "", "BEFORE snapshot (*.json)"
+        )
+        if not path:
+            return
+        try:
+            snapshot = self.store.import_file(Path(path))
+            self.refresh_history(snapshot.id)
+            self.select_baseline()
+        except (OSError, ValueError) as exc:
+            QMessageBox.warning(self, tr("Снимок не импортирован"), tr(str(exc)))
+
+    def history_menu(self, point):
+        item = self.history.itemAt(point)
+        if item is None or self.busy:
+            return
+        snapshot_id = item.data(Qt.ItemDataRole.UserRole)
+        menu = QMenu(self)
+        export_action = menu.addAction(tr("Экспортировать снимок…"))
+        delete_action = menu.addAction(tr("Удалить снимок…"))
+        selected = menu.exec(self.history.mapToGlobal(point))
+        if selected == export_action:
+            path, _ = QFileDialog.getSaveFileName(
+                self, tr("Экспорт снимка"), "before-snapshot.json", "JSON (*.json)"
+            )
+            if path:
+                try:
+                    atomic_write(Path(path), self.store.get(snapshot_id).to_json())
+                    self.status.setText(
+                        "Снимок экспортирован. Он содержит локальные пути и настройки; для отправки лучше использовать отчёт."
+                    )
+                except (OSError, ValueError) as exc:
+                    QMessageBox.warning(self, tr("Экспорт не выполнен"), tr(str(exc)))
+        elif selected == delete_action:
+            if (
+                QMessageBox.question(
+                    self,
+                    tr("Удалить рабочую точку?"),
+                    tr("Этот снимок будет удалён из локальной истории."),
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                    QMessageBox.StandardButton.No,
+                )
+                == QMessageBox.StandardButton.Yes
+            ):
+                self.store.delete(snapshot_id)
+                if self.baseline and self.baseline.id == snapshot_id:
+                    self.baseline = None
+                    self.analysis = None
+                    self.render_empty()
+                self.refresh_history()
+                self.status.setText("Снимок удалён")
+
+    def open_report(self):
+        if self.analysis:
+            ReportDialog(self.analysis, self).exec()
+
+    def about(self):
+        QMessageBox.information(
+            self,
+            f"BEFORE {__version__}",
+            tr(
+                "Сохрани рабочую точку. Сравни настройки, когда возникнет проблема. Проверь доказательства.\n\n"
+                "Windows: WinINET, PATH из реестра, команды, hosts, Dhcp/Dnscache/BITS.\n"
+                "Linux: прокси и PATH процесса, команды, hosts, NetworkManager/systemd-resolved.\n\n"
+                "Снимки не обращаются в интернет. Проверка локального прокси касается только заданного loopback-порта. Внешние HTTPS-запросы включаются отдельно.\n\n"
+                "Автоматическое исправление, драйверы, BSOD и аппаратные неисправности в эту версию не входят.\n\n"
+                f"Локальные данные: {self.store.directory}\nMIT License · Без аккаунта и телеметрии."
+            ),
+        )
+
+
+def main():
+    if "--probe-worker" in sys.argv:
+        from .probes import worker
+
+        print(json.dumps(worker(json.load(sys.stdin))))
+        return
+    app = QApplication(sys.argv)
+    app.setApplicationName("BEFORE")
+    app.setOrganizationName("BEFORE")
+    app.setStyle("Fusion")
+    app.setStyleSheet(STYLE)
+    app.setFont(QFont("DejaVu Sans" if sys.platform != "win32" else "Segoe UI", 10))
+    try:
+        window = Window()
+    except (OSError, ValueError, sqlite3.Error) as exc:
+        QMessageBox.critical(None, tr("BEFORE · Не удалось открыть историю"), tr(str(exc)))
+        return
+    window.show()
+    if "--demo" in sys.argv:
+        QTimer.singleShot(0, window.show_demo)
+    if "--smoke" in sys.argv:
+        QTimer.singleShot(800, app.quit)
+    raise SystemExit(app.exec())

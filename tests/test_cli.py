@@ -9,7 +9,7 @@ def test_compare_export_is_an_offline_end_to_end_flow(tmp_path):
     new.write_text(current.to_json(), encoding="utf-8")
     assert main(["compare", str(old), str(new), "--output", str(report)]) == 0
     text = report.read_text(encoding="utf-8")
-    assert "python: файл не найден" in text
+    assert "python: file not found" in text
     assert "Alex" not in text
     assert text.startswith("<!doctype html>")
 
