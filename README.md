@@ -69,7 +69,7 @@ button for an immediate in-app switch, or launch with `python run.py --lang ru`.
 | Services | Dhcp, Dnscache, BITS via native APIs | NetworkManager, systemd-resolved via bounded `systemctl show`, if present |
 
 Default command snapshots check `python`, `python3`, `git`, `node`, `npm` and
-`ffmpeg`. Select **Команда** and enter another basename to include it in the next
+`ffmpeg`. Select **Command** and enter another basename to include it in the next
 snapshot or diagnosis. A custom command absent from an old snapshot is never
 treated as a known-good baseline.
 
@@ -83,7 +83,7 @@ There is no background recorder: snapshots are taken explicitly.
 - Saving or comparing snapshots initiates **no HTTP/TCP connectivity probes**.
 - Live diagnosis may open a short TCP connection to an explicitly configured
   **numeric loopback / localhost proxy port**. It does not scan remote proxy ports.
-- External checks are opt-in under **Интернет**. They issue HTTPS HEAD requests
+- External checks are opt-in under **Internet**. They issue HTTPS HEAD requests
   to the hostname you select (default `example.com`), directly and through a
   supported explicit HTTP/HTTPS proxy. The direct check deliberately bypasses
   the explicit proxy. System DNS resolution is also attempted.
